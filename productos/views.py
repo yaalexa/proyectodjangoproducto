@@ -1,17 +1,18 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from drf_yasg.utils import swagger_auto_schema
 
 from .models import Producto
+from .serializer import ProductoEntrada
 
 
 class ProductosView(APIView):
 
-    # Solo usuarios autenticados pueden entrar
     permission_classes = [IsAuthenticated]
 
-    # LISTAR
-    def get(self, request, id):
+    # LISTAR TODOS O BUSCAR POR ID
+    def get(self, request, id=None):
 
         if id:
             producto = Producto.objects.get(id=id)
@@ -41,6 +42,10 @@ class ProductosView(APIView):
 
 
     # GUARDAR
+    @swagger_auto_schema(
+        operation_description="Guardar producto",
+        request_body=ProductoEntrada
+    )
     def post(self, request):
 
         Producto.objects.create(
@@ -51,11 +56,15 @@ class ProductosView(APIView):
         )
 
         return Response({
-            "mensaje": "Producto guardado"
+            "mensaje": "Producto guardado correctamente"
         })
 
-
+class ProductosIdView(APIView):
     # ACTUALIZAR
+    @swagger_auto_schema(
+        operation_description="Actualizar producto",
+        request_body=ProductoEntrada
+    )
     def put(self, request, id):
 
         producto = Producto.objects.get(id=id)
@@ -68,7 +77,7 @@ class ProductosView(APIView):
         producto.save()
 
         return Response({
-            "mensaje": "Producto actualizado"
+            "mensaje": "Producto actualizado correctamente"
         })
 
 
@@ -80,5 +89,5 @@ class ProductosView(APIView):
         producto.delete()
 
         return Response({
-            "mensaje": "Producto eliminado"
+            "mensaje": "Producto eliminado correctamente"
         })
