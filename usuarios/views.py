@@ -7,6 +7,9 @@ from rest_framework.authtoken.models import Token
 
 from drf_yasg.utils import swagger_auto_schema
 
+from roles.models import Rol
+from .models import Perfil
+
 from .serializer import RegistroSerializer, LoginSerializer
 
 
@@ -20,11 +23,27 @@ class RegistroView(APIView):
         username = request.data.get("username")
         email = request.data.get("email")
         password = request.data.get("password")
+        rol_id = request.data.get("rol")
 
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(
+            username=username
+        ).exists():
+
             return Response({
                 "mensaje": "El usuario ya existe"
-            })
+            }, status=400)
+
+        try:
+
+            rol = Rol.objects.get(
+                id=rol_id
+            )
+
+        except Rol.DoesNotExist:
+
+            return Response({
+                "mensaje": "El rol no existe"
+            }, status=400)
 
         usuario = User.objects.create_user(
             username=username,
@@ -32,11 +51,25 @@ class RegistroView(APIView):
             password=password
         )
 
-        token = Token.objects.create(user=usuario)
+        Perfil.objects.create(
+            usuario=usuario,
+            rol=rol
+        )
+
+        token = Token.objects.create(
+            user=usuario
+        )
 
         return Response({
+
             "mensaje": "Usuario registrado correctamente",
-            "token": token.key
+
+            "token": token.key,
+
+            "usuario": usuario.username,
+
+            "rol": rol.nombre
+
         })
 
 
@@ -61,11 +94,24 @@ class LoginView(APIView):
                 user=usuario
             )
 
+            perfil = Perfil.objects.get(
+                usuario=usuario
+            )
+
             return Response({
+
                 "mensaje": "Login correcto",
-                "token": token.key
+
+                "token": token.key,
+
+                "usuario": usuario.username,
+
+                "rol": perfil.rol.nombre
+
             })
 
         return Response({
+
             "mensaje": "Usuario o contraseña incorrectos"
-        })
+
+        }, status=401)
